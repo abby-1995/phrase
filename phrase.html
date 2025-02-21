@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <title>英语短语记忆大师</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #f0f2f5;
+    }
+
+    .category-list {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .category-btn {
+      padding: 15px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .category-btn:hover {
+      transform: scale(1.05);
+      background: #45a049;
+    }
+
+    .question-container {
+      display: none;
+    }
+
+    .progress {
+      margin: 10px 0;
+      color: #666;
+    }
+
+    .options {
+      display: grid;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .option-btn {
+      padding: 12px;
+      background: white;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .option-btn:hover {
+      border-color: #4CAF50;
+    }
+
+    .correct {
+      background: #c8e6c9 !important;
+    }
+
+    .wrong {
+      background: #ffcdd2 !important;
+    }
+
+    .feedback {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 6px;
+    }
+
+    .next-button {
+      padding: 10px 15px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .next-button:hover {
+      background: #45a049;
+    }
+
+    .back-to-category {
+      padding: 10px 15px;
+      background: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .back-to-category:hover {
+      background: #1976D2;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="categorySelection">
+    <h2>选择练习类别 📚</h2>
+    <div class="category-list" id="categories"></div>
+  </div>
+
+  <div class="question-container" id="questionContainer">
+    <div class="progress" id="progress"></div>
+    <h3 id="phraseDisplay"></h3>
+    <div class="options" id="options"></div>
+    <div id="feedback" class="feedback"></div>
+    <button id="nextButton" class="next-button" onclick="showNextQuestion()">下一题</button>
+    <button id="backToCategoryButton" class="back-to-category" onclick="backToCategory()">回到目录</button>
+  </div>
+
+  <script>
+    // 短语数据（示例数据，需根据实际文件内容补充完整）
+    const phrasesData = {
+      "act": [
+        ["act as", "充当"],
+        ["act for", "代理"],
+        ["act out", "表演"],
+        ["act up", "捣乱"]
+      ],
+      "break": [
+        ["break away", "摆脱"],
+        ["break down", "出故障"],
+        ["break in", "闯入"],
+        ["break into", "破门而入"],
+        ["break off", "折断"],
+        ["break out", "爆发"],
+        ["break through", "突围"],
+        ["break up", "分解"]
+      ],
+      "bring": [
+        ["bring about", "引起"],
+        ["bring along", "带来"],
+        ["bring back", "拿回"],
+        ["bring down", "降低"],
+        ["bring in", "引进"],
+        ["bring on", "发展"],
+        ["bring out", "拿出"],
+        ["bring to", "使苏醒"],
+        ["bring up", "抚养"]
+      ],
+      "call": [
+        ["call at", "访问（某地）"],
+        ["call back", "回电话"],
+        ["call for", "提倡"],
+        ["call in", "请来"],
+        ["call off", "取消"],
+        ["call on", "号召"],
+        ["call out", "大声呼喊"],
+        ["call up", "打电话"]
+      ],
+      "come": [
+        ["come about", "发生"],
+        ["come across", "偶然相遇"],
+        ["come along", "进展"],
+        ["come back", "回来"],
+        ["come down", "下来"],
+        ["come for", "来拿"],
+        ["come from", "来自"],
+        ["come in", "进来"],
+        ["come into being", "形成"],
+        ["come off", "脱落"],
+        ["come on", "加油"],
+        ["come out", "出现"],
+        ["come over", "过来"],
+        ["come to", "苏醒"],
+        ["come true", "实现"]
+      ],
+      "cut": [
+        ["cut away", "切除"],
+        ["cut down", "砍倒"],
+        ["cut in", "插嘴"],
+        ["cut into pieces", "切成碎片"],
+        ["cut off", "切断"],
+        ["cut out", "删除"],
+        ["cut up", "切碎"]
+      ],
+      "do": [
+        ["do away with", "废除"],
+        ["do one’s best", "尽力"],
+        ["do some reading", "读书"],
+        ["do some shopping", "购物"],
+        ["do up", "打扮"]
+      ],
+      "get": [
+        ["get across", "理解"],
+        ["get away", "逃脱"],
+        ["get back", "回来"],
+        ["get down", "下来"],
+        ["get in", "进入"],
+        ["get off", "下车"],
+        ["get on", "上车"],
+        ["get out", "出去"],
+        ["get over", "克服"],
+        ["get through", "完成"],
+        ["get up", "起床"]
+      ],
+      "give": [
+        ["give away", "赠送"],
+        ["give back", "归还"],
+        ["give in", "投降"],
+        ["give off", "释放"],
+        ["give out", "分发"],
+        ["give up", "放弃"],
+        ["give a concert", "开音乐会"],
+        ["give birth to", "生产"],
+        ["give sb a hand", "帮助某人"]
+      ],
+      "go": [
+        ["go abroad", "出国"],
+        ["go away", "走开"],
+        ["go back", "回去"],
+        ["go beyond", "超越"],
+        ["go down", "下降"],
+        ["go for", "努力获取"],
+        ["go in for", "参加"],
+        ["go into", "进入"],
+        ["go off", "离开"],
+        ["go on", "继续"],
+        ["go out", "熄灭"],
+        ["go through", "通过"],
+        ["go up", "上升"],
+        ["go with", "搭配"]
+      ],
+      "have": [
+        ["have a break", "休息"],
+        ["have a cold", "感冒"],
+        ["have a conversation", "交谈"],
+        ["have a good time", "玩得开心"],
+        ["have a look", "看一看"],
+        ["have a rest", "休息"],
+        ["have a swim", "游泳"],
+        ["have a try", "试一试"],
+        ["have breakfast", "吃早饭"],
+        ["have lessons", "上课"],
+        ["have mercy on", "宽恕"],
+        ["have no choice", "别无选择"],
+        ["have to", "不得不"]
+      ],
+      "hold": [
+        ["hold a meeting", "开会"],
+        ["hold back", "控制，隐瞒"],
+        ["hold on", "等一等，不要挂电话"],
+        ["hold on to", "抓住，保住"],
+        ["hold out", "伸出，坚持下去"],
+        ["hold up", "阻挡，举起"]
+      ],
+      "keep": [
+        ["keep away from", "避开"],
+        ["keep back", "隐瞒"],
+        ["keep down", "控制"],
+        ["keep off", "不接触"],
+        ["keep on", "继续"],
+        ["keep out", "挡在外面"],
+        ["keep up", "保持"],
+        ["keep up with", "赶上"],
+        ["keep a record", "保持记录"],
+        ["keep an eye on", "注视"],
+        ["keep busy", "保持忙碌"],
+        ["keep fit", "保持健康"],
+        ["keep in mind", "记住"]
+      ],
+      "knock": [
+        ["knock at", "敲打"],
+        ["knock down", "撞倒"],
+        ["knock into", "撞到"],
+        ["knock out", "淘汰"]
+      ],
+      "look": [
+        ["look after", "照顾"],
+        ["look at", "看着"],
+        ["look back", "回顾"],
+        ["look forward to", "盼望"],
+        ["look for", "寻找"],
+        ["look into", "调查"],
+        ["look out", "当心"],
+        ["look over", "检查"],
+        ["look through", "浏览"],
+        ["look up", "查阅"],
+        ["look up to", "尊敬"]
+      ],
+      "make": [
+        ["make into", "制成"],
+        ["make out", "理解"],
+        ["make up", "化妆，编造"],
+        ["make up for", "弥补"],
+        ["make a choice", "做出选择"],
+        ["make a decision", "做出决定"],
+        ["make a mistake", "犯错误"],
+        ["make a plan", "制定计划"],
+        ["make a promise", "承诺"],
+        ["make friends with", "交朋友"],
+        ["make it", "成功"],
+        ["make sense", "有意义"],
+        ["make sure", "确保"]
+      ],
+      "pass": [
+        ["pass away", "去世"],
+        ["pass by", "经过"],
+        ["pass down", "传下来"],
+        ["pass on", "传递"],
+        ["pass out", "昏厥"],
+        ["pass through", "穿过"],
+        ["pass the exam", "通过考试"]
+      ],
+      "pay": [
+        ["pay attention to", "注意"],
+        ["pay for", "付费"],
+        ["pay off", "还清"],
+        ["pay the bill", "买单"],
+        ["pay a visit to", "访问"]
+      ],
+      "pick": [
+        ["pick out", "挑选"],
+        ["pick up", "捡起，学会"],
+        ["pick sb up", "开车接某人"]
+      ],
+      "put": [
+        ["put away", "收拾"],
+        ["put down", "放下"],
+        ["put forward", "提出"],
+        ["put off", "推迟"],
+        ["put on", "穿上"],
+        ["put out", "扑灭"],
+        ["put up", "张贴"],
+        ["put up with", "忍受"]
+      ],
+      "send": [
+        ["send away", "让走开"],
+        ["send for", "派人去请"],
+        ["send in", "寄送"],
+        ["send out", "发出"],
+        ["send up", "发射"]
+      ],
+      "set": [
+        ["set about", "着手"],
+        ["set aside", "留出"],
+        ["set down", "放下"],
+        ["set off", "出发"],
+        ["set out", "出发"],
+        ["set up", "创立"],
+        ["set fire to", "放火烧"],
+        ["set a goal", "设定目标"]
+      ],
+      "stand": [
+        ["stand by", "支持"],
+        ["stand for", "代表"],
+        ["stand out", "突出"],
+        ["stand up", "起立"]
+      ],
+      "take": [
+        ["take after", "相像"],
+        ["take apart", "分开"],
+        ["take away", "拿走"],
+        ["take back", "拿回"],
+        ["take down", "拿下"],
+        ["take in", "吸收"],
+        ["take off", "起飞"],
+        ["take on", "呈现"],
+        ["take out", "拿出"],
+        ["take over", "接管"],
+        ["take up", "从事"],
+        ["take a bath", "洗澡"],
+        ["take a chance", "冒险"],
+        ["take a look", "看一看"],
+        ["take a message", "捎口信"],
+        ["take a photo", "拍照"],
+        ["take advantage of", "利用"],
+        ["take care of", "照顾"],
+        ["take effect", "生效"],
+        ["take exercise", "运动"],
+        ["take notes", "做笔记"],
+        ["take part in", "参加"],
+        ["take place", "发生"]
+      ],
+      "think": [
+        ["think about", "思考"],
+        ["think of", "想到"],
+        ["think out", "想出"],
+        ["think over", "仔细考虑"],
+        ["think through", "思考直到得出结论"],
+        ["think up", "想出"],
+        ["think twice", "再三考虑"]
+      ],
+      "turn": [
+        ["turn against", "背叛"],
+        ["turn around", "转身"],
+        ["turn away", "赶走"],
+        ["turn down", "调小"],
+        ["turn in", "交进"],
+        ["turn into", "变成"],
+        ["turn off", "关掉"],
+        ["turn on", "打开"],
+        ["turn out", "结果是"],
+        ["turn over", "翻转"],
+        ["turn up", "出现"],
+        ["turn right/left", "向右/左转"]
+      ],
+      "about": [
+        ["speak about", "谈论"],
+        ["talk about", "谈论"],
+        ["care about", "关心"],
+        ["bring about", "引起"],
+        ["set about", "着手"],
+        ["come about", "发生"],
+        ["hear about", "听说"],
+        ["worry about", "担心"]
+      ],
+      "at": [
+        ["aim at", "瞄准"],
+        ["run at", "冲向"],
+        ["call at", "拜访"],
+        ["tear at", "撕扯"],
+        ["look at", "看"],
+        ["work at", "从事"],
+        ["come at", "攻击"],
+        ["shout at", "对……喊叫"],
+        ["stare at", "凝视"],
+        ["glare at", "怒视"],
+        ["glance at", "瞥一眼"],
+        ["laugh at", "嘲笑"],
+        ["knock at", "敲"],
+        ["point at", "指向"],
+        ["smile at", "对……微笑"],
+        ["strike at", "打击"],
+        ["shoot at", "射击"],
+        ["wonder at", "对……感到惊讶"]
+      ],
+      "away": [
+        ["die away", "逐渐消失"],
+        ["put away", "收起来"],
+        ["pass away", "去世"],
+        ["wash away", "冲走"],
+        ["take away", "拿走"],
+        ["give away", "赠送"],
+        ["send away", "送走"],
+        ["turn away", "转过身"],
+        ["wear away", "磨损"],
+        ["throw away", "扔掉"],
+        ["blow away", "吹走"],
+        ["carry away", "带走"],
+        ["clear away", "清理"],
+        ["break away", "摆脱"]
+      ],
+      "back": [
+        ["keep back", "隐瞒"],
+        ["hold back", "阻止"],
+        ["give back", "归还"],
+        ["call back", "回电话"],
+        ["take back", "拿回"],
+        ["look back", "回顾"]
+      ],
+      "down": [
+        ["cut down", "削减"],
+        ["put down", "放下"],
+        ["take down", "取下"],
+        ["turn down", "调小"],
+        ["slow down", "减速"],
+        ["pass down", "传下来"],
+        ["calm down", "平静"],
+        ["burn down", "烧毁"],
+        ["tear down", "拆除"],
+        ["come down", "下来"],
+        ["break down", "出故障"],
+        ["bring down", "降低"],
+        ["settle down", "安定"]
+      ],
+      "from": [
+        ["die from", "死于"],
+        ["hear from", "收到……的信"],
+        ["learn from", "向……学习"],
+        ["differ from", "与……不同"],
+        ["suffer from", "遭受"],
+        ["result from", "由……导致"],
+        ["separate from", "与……分开"],
+        ["keep from", "阻止"],
+        ["prevent from", "防止"],
+        ["date from", "始于"]
+      ],
+      "for": [
+        ["run for", "竞选"],
+        ["ask for", "要求"],
+        ["beg for", "乞求"],
+        ["wait for", "等待"],
+        ["look for", "寻找"],
+        ["call for", "要求"],
+        ["hunt for", "搜寻"],
+        ["long for", "渴望"],
+        ["care for", "关心"],
+        ["seek for", "寻找"],
+        ["come for", "来取"],
+        ["apply for", "申请"],
+        ["stand for", "代表"],
+        ["search for", "寻找"],
+        ["change for", "换取"],
+        ["charge for", "收费"],
+        ["take for", "误以为"],
+        ["hope for", "希望"]
+      ],
+      "in": [
+        ["get in", "进入"],
+        ["fill in", "填写"],
+        ["cut in", "插嘴"],
+        ["join in", "参加"],
+        ["look in", "查看"],
+        ["hand in", "上交"],
+        ["drop in", "拜访"],
+        ["give in", "让步"],
+        ["take in", "吸收"],
+        ["call in", "召集"],
+        ["bring in", "引进"],
+        ["break in", "闯入"],
+        ["result in", "导致"],
+        ["succeed in", "成功"],
+        ["persist in", "坚持"]
+      ],
+      "into": [
+        ["run into", "撞上"],
+        ["look into", "调查"],
+        ["burst into", "闯入"],
+        ["turn into", "变成"],
+        ["change into", "变成"],
+        ["divide into", "分成"],
+        ["put into", "放入"],
+        ["translate into", "翻译成"]
+      ],
+      "of": [
+        ["die of", "死于"],
+        ["talk of", "谈论"],
+        ["hear of", "听说"],
+        ["think of", "想到"],
+        ["dream of", "梦到"],
+        ["speak of", "谈到"],
+        ["consist of", "由……组成"],
+        ["approve of", "赞成"],
+        ["complain of", "抱怨"],
+        ["become of", "发生……情况"]
+      ],
+      "out": [
+        ["go out", "熄灭"],
+        ["set out", "出发"],
+        ["try out", "试验"],
+        ["put out", "扑灭"],
+        ["run out", "用完"],
+        ["let out", "释放"],
+        ["pick out", "挑选"],
+        ["hold out", "坚持"],
+        ["wear out", "穿破"],
+        ["make out", "理解"],
+        ["keep out", "阻止进入"],
+        ["find out", "发现"],
+        ["work out", "解决"],
+        ["send out", "发出"],
+        ["give out", "分发"],
+        ["look out", "小心"],
+        ["hand out", "分发"],
+        ["help out", "帮助"],
+        ["turn out", "结果是"],
+        ["come out", "出版"],
+        ["cross out", "划掉"],
+        ["burst out", "突然爆发"],
+        ["carry out", "执行"],
+        ["break out", "爆发"],
+        ["point out", "指出"],
+        ["figure out", "算出"],
+        ["bring out", "阐明"],
+        ["leave out", "遗漏"],
+        ["speak out", "大声说出"]
+      ],
+      "over": [
+        ["go over", "复习"],
+        ["get over", "克服"],
+        ["run over", "压过"],
+        ["take over", "接管"],
+        ["turn over", "翻转"],
+        ["fall over", "摔倒"],
+        ["roll over", "翻滚"],
+        ["look over", "检查"],
+        ["think over", "仔细考虑"],
+        ["watch over", "看守"]
+      ],
+      "to": [
+        ["add to", "增加"],
+        ["get to", "到达"],
+        ["see to", "处理"],
+        ["turn to", "转向"],
+        ["come to", "达到"],
+        ["lead to", "导致"],
+        ["reply to", "回复"],
+        ["refer to", "提及"],
+        ["bring to", "使……苏醒"],
+        ["agree to", "同意"],
+        ["object to", "反对"],
+        ["point to", "指向"],
+        ["write to", "写信给"],
+        ["relate to", "涉及"],
+        ["attend to", "处理"],
+        ["belong to", "属于"],
+        ["supply to", "提供"],
+        ["devote to", "致力于"],
+        ["stick to", "坚持"],
+        ["compare to", "与……相比"],
+        ["hold to", "坚持"],
+        ["return to", "返回"],
+        ["amount to", "总计"],
+        ["live up to", "不辜负"]
+      ]
+      // 继续添加其他类别...
+    };
+    let currentQuestions = [];
+    let wrongAnswers = [];
+    let currentIndex = 0;
+    // 初始化类别选择
+    function initCategories() {
+      const container = document.getElementById('categories');
+      Object.keys(phrasesData).forEach(category => {
+        const btn = document.createElement('button');
+        btn.className = 'category-btn';
+        btn.textContent = `${category} (${phrasesData[category].length}题)`;
+        btn.onclick = () => startGame(category);
+        container.appendChild(btn);
+      });
+    }
+
+    function startGame(category) {
+      document.getElementById('categorySelection').style.display = 'none';
+      document.getElementById('questionContainer').style.display = 'block';
+      currentQuestions = shuffle([...phrasesData[category]]);
+      wrongAnswers = [];
+      currentIndex = 0;
+      showNextQuestion();
+    }
+
+    function showNextQuestion() {
+      document.getElementById('nextButton').style.display = 'none'; // 隐藏“下一题”按钮
+      if (currentIndex >= currentQuestions.length) {
+        if (wrongAnswers.length > 0) {
+          currentQuestions = shuffle(wrongAnswers);
+          wrongAnswers = [];
+          currentIndex = 0;
+        } else {
+          return alert('练习完成！🎉');
+        }
+      }
+      const [phrase, correctAnswer] = currentQuestions[currentIndex];
+      document.getElementById('phraseDisplay').textContent = phrase;
+      updateProgress();
+      // 生成选项（包含正确答案和随机错误答案）
+      const options = [correctAnswer];
+      while (options.length < 4) {
+        const randomAnswer = getRandomAnswer(phrase);
+        if (!options.includes(randomAnswer)) options.push(randomAnswer);
+      }
+      displayOptions(shuffle(options), correctAnswer);
+    }
+
+    function displayOptions(options, correct) {
+      const container = document.getElementById('options');
+      container.innerHTML = '';
+      options.forEach(answer => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.textContent = answer;
+        btn.onclick = () => checkAnswer(answer === correct, correct);
+        container.appendChild(btn);
+      });
+    }
+
+    function checkAnswer(isCorrect, correctAnswer) {
+      const feedback = document.getElementById('feedback');
+      const options = document.querySelectorAll('.option-btn');
+      options.forEach(btn => {
+        btn.disabled = true;
+        if (btn.textContent === correctAnswer) {
+          btn.classList.add('correct');
+        }
+      });
+      if (isCorrect) {
+        feedback.textContent = "正确！✅";
+        feedback.style.backgroundColor = "#c8e6c9";
+        currentIndex++;
+        setTimeout(showNextQuestion, 1500); // 正确时自动跳到下一题
+      } else {
+        feedback.textContent = `错误 ❌ 正确答案是：${correctAnswer}`;
+        feedback.style.backgroundColor = "#ffcdd2";
+        wrongAnswers.push(currentQuestions[currentIndex]);
+        currentIndex++;
+        document.getElementById('nextButton').style.display = 'block'; // 显示“下一题”按钮
+      }
+    }
+
+    function updateProgress() {
+      const progress = document.getElementById('progress');
+      progress.textContent = `进度：${currentIndex + 1}/${currentQuestions.length} 
+            剩余复习：${wrongAnswers.length}`;
+    }
+    // 回到目录
+    function backToCategory() {
+      document.getElementById('categorySelection').style.display = 'block';
+      document.getElementById('questionContainer').style.display = 'none';
+    }
+    // 实用工具函数
+    function shuffle(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    function getRandomAnswer(currentPhrase) {
+      const allAnswers = Object.values(phrasesData)
+        .flat()
+        .filter(([p]) => p !== currentPhrase)
+        .map(([, a]) => a);
+      return allAnswers[Math.floor(Math.random() * allAnswers.length)];
+    }
+    // 初始化
+    initCategories();
+  </script>
+</body>
+
+</html>
