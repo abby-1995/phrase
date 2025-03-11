@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>自然探险单词挑战</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #e0f7fa;
+            padding: 20px;
+        }
+        .game-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .word-bank {
+            background: #c8e6c9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .word-card {
+            display: inline-block;
+            background: #fff;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: move;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+        .word-card:hover {
+            transform: scale(1.05);
+        }
+        .category-box {
+            background: #b2dfdb;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            min-height: 100px;
+        }
+        .score-board {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+        }
+        .correct { background: #a5d6a7 !important; }
+        .incorrect { background: #ef9a9a !important; }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🌿 自然探险单词挑战 🌍</h1>
+        <div class="score-board">
+            <h3>得分: <span id="score">0</span></h3>
+            <p>剩余单词: <span id="remaining">20</span></p>
+        </div>
+
+        <div class="category-box" id="habitat" ondrop="drop(event)" ondragover="allowDrop(event)">
+            <h3>🌳 栖息地与环境</h3>
+            <p>请拖放：ocean, hill, mountain, jungle, river...</p>
+        </div>
+
+        <div class="category-box" id="animals" ondrop="drop(event)" ondragover="allowDrop(event)">
+            <h3>🐆 野生动物</h3>
+            <p>请拖放：leopards, cheetahs, hyenas...</p>
+        </div>
+
+        <div class="category-box" id="weather" ondrop="drop(event)" ondragover="allowDrop(event)">
+            <h3>☀️ 天气状况</h3>
+            <p>请拖放：sunny, rainy, humid...</p>
+        </div>
+
+        <div class="word-bank">
+            <h3>📚 单词库 - 拖动到正确区域</h3>
+            <div id="words">
+                <!-- 单词将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏配置
+        const wordMap = {
+            // 栖息地与环境
+            'ocean': 'habitat','hill': 'habitat','mountain': 'habitat',
+            'jungle': 'habitat','river': 'habitat','desert': 'habitat',
+            'lake': 'habitat','beach': 'habitat','island': 'habitat',
+            'forest': 'habitat',
+            
+            // 野生动物
+            'vulture': 'animals','leopards': 'animals','cheetahs': 'animals',
+            'hyenas': 'animals','scorpions': 'animals','antelope': 'animals',
+            
+            // 天气状况
+            'freezing': 'weather','sunny': 'weather','rainy': 'weather',
+            'humid': 'weather','windy': 'weather','wet': 'weather',
+            'cloudy': 'weather','dry': 'weather','warm': 'weather',
+            'foggy': 'weather','cold': 'weather','hot': 'weather',
+            
+            // 其他工具
+            'spear': 'tools','bows and arrows': 'tools',
+            
+            // 食物类
+            'berries': 'food','nuts': 'food','insects': 'food'
+        };
+
+        let score = 0;
+        let remaining = Object.keys(wordMap).length;
+
+        // 初始化单词库
+        function initGame() {
+            const wordsContainer = document.getElementById('words');
+            Object.keys(wordMap).forEach(word => {
+                const div = document.createElement('div');
+                div.className = 'word-card';
+                div.draggable = true;
+                div.id = word;
+                div.textContent = word;
+                div.ondragstart = drag;
+                wordsContainer.appendChild(div);
+            });
+            updateScore();
+        }
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.id);
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            const wordId = ev.dataTransfer.getData("text");
+            const wordElement = document.getElementById(wordId);
+            const correctCategory = wordMap[wordId];
+            
+            if (ev.target.closest('.category-box').id === correctCategory) {
+                wordElement.classList.add('correct');
+                score += 10;
+                remaining--;
+                wordElement.draggable = false;
+            } else {
+                wordElement.classList.add('incorrect');
+                score -= 5;
+            }
+            
+            updateScore();
+        }
+
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('remaining').textContent = remaining;
+        }
+
+        // 开始游戏
+        initGame();
+    </script>
+</body>
+</html>
